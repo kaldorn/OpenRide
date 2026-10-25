@@ -4,7 +4,9 @@ import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
+import androidx.annotation.RequiresApi
 
 /**
  * [AutoBackupStore] backed by shared storage: `Download/OpenRide/` via
@@ -29,6 +31,8 @@ import android.provider.MediaStore
  * indistinguishable from each other. One file per package keeps each build's history its own
  * and still stable across that package's reinstalls.
  */
+// Android 7 fork: only constructed on API 29+; AppContainer picks LegacyFileAutoBackupStore below.
+@RequiresApi(Build.VERSION_CODES.Q)
 class MediaStoreAutoBackupStore(context: Context) : AutoBackupStore {
     private val resolver = context.applicationContext.contentResolver
     private val fileName = fileNameFor(context.applicationContext.packageName)
