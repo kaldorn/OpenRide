@@ -54,6 +54,7 @@ jobs:
 
       - name: Report lint and test problems as annotations
         if: always()
+        id: report
         run: |
           python3 - <<'PY'
           import glob, xml.etree.ElementTree as ET
@@ -76,6 +77,14 @@ jobs:
                           msg = (bad.get("message") or bad.text or "")[:200].replace("\n", " ")
                           print(f"::warning::test {tc.get('classname')}.{tc.get('name')}: {msg}")
           print(f"::notice::unit tests: {failed} failed")
+          # A NewApi hit is a call that crashes on Android 7, so it blocks the build.
+          import sys
+          hard = 0
+          for f in glob.glob("app/build/reports/lint-results-debugReal.xml"):
+              hard = sum(1 for i in ET.parse(f).getroot().findall("issue") if i.get("id") == "NewApi")
+          if hard:
+              print(f"::error::{hard} NewApi lint hits: calls that need a newer Android than 7")
+          sys.exit(1 if hard or failed else 0)
           PY
 
       - name: Build APK

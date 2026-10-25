@@ -70,7 +70,10 @@ class GameHostActivity : GodotActivity(), GameLoadingHost {
         // the hub and the games with black bars at the sides and bottom.
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.attributes = window.attributes.apply {
-            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            // Display cutouts arrived in Android 9; the original Bike's Android 7 has none.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
             // That alone still left the frame at 1920x1008 on the bike (Android 11): the window's
             // own fit-insets types default to the system bars, hidden or not. Fit none.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) fitInsetsTypes = 0

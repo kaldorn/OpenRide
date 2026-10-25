@@ -356,21 +356,15 @@ class AppContainer(private val applicationContext: Context) {
      */
     val otherMusicDetector: OtherMusicDetector by lazy {
         val audioManager = applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        OtherMusicDetector(
-            players = {
-                audioManager.activePlaybackConfigurations
-                    .filter { it.audioAttributes.usage == AudioAttributes.USAGE_MEDIA }
-            },
-            musicActive = { audioManager.isMusicActive },
-        ).also { detector ->
-            audioManager.registerAudioPlaybackCallback(
-                object : AudioManager.AudioPlaybackCallback() {
-                    override fun onPlaybackConfigChanged(configs: MutableList<AudioPlaybackConfiguration>?) {
-                        detector.observe()
-                    }
-                },
-                Handler(Looper.getMainLooper()),
-            )
+        // Playback configurations arrived in Android 8 (API 26). On the original Bike's Android 7
+        // there is no per-player list, so the detector sees no players and "auto" plays game music.
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            OtherMusicDetector(
+                players = { MediaPlayers.active(audioManager) },
+                musicActive = { audioManager.isMusicActive },
+            ).also { detector -> MediaPlayers.observe(audioManager) { detector.observe() } }
+        } else {
+            OtherMusicDetector(players = { emptyList() }, musicActive = { audioManager.isMusicActive })
         }
     }
 
@@ -443,3 +437,22 @@ fun <T : ViewModel> viewModelFactory(create: () -> T): ViewModelProvider.Factory
         @Suppress("UNCHECKED_CAST")
         override fun <VM : ViewModel> create(modelClass: Class<VM>): VM = create() as VM
     }
+
+/** API 26+ playback-configuration calls, kept out of [AppContainer] so Android 7 never loads them. */
+@androidx.annotation.RequiresApi(android.os.Build.VERSION_CODES.O)
+private object MediaPlayers {
+    fun active(audioManager: AudioManager): List<Any> =
+        audioManager.activePlaybackConfigurations
+            .filter { it.audioAttributes.usage == AudioAttributes.USAGE_MEDIA }
+
+    fun observe(audioManager: AudioManager, onChange: () -> Unit) {
+        audioManager.registerAudioPlaybackCallback(
+            object : AudioManager.AudioPlaybackCallback() {
+                override fun onPlaybackConfigChanged(configs: MutableList<AudioPlaybackConfiguration>?) {
+                    onChange()
+                }
+            },
+            Handler(Looper.getMainLooper()),
+        )
+    }
+}
