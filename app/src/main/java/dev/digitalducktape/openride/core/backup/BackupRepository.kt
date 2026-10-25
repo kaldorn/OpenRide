@@ -7,7 +7,7 @@ import dev.digitalducktape.openride.core.data.Profile
 import dev.digitalducktape.openride.core.data.ProfileDao
 import dev.digitalducktape.openride.core.data.RideDao
 import dev.digitalducktape.openride.core.profile.AvatarPhotoStore
-import java.util.Base64
+import android.util.Base64
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
@@ -57,7 +57,7 @@ class BackupRepository(
 
     private fun encodePhoto(profile: Profile): String? = profile.avatarPhotoPath
         ?.let { path -> avatarPhotoStore?.readBytes(path) }
-        ?.let { bytes -> Base64.getEncoder().encodeToString(bytes) }
+        ?.let { bytes -> Base64.encodeToString(bytes, Base64.NO_WRAP) }
 
     /** [createSnapshot] serialized to a JSON string ready to write to a shareable file. */
     suspend fun exportJson(): String = json.encodeToString(BackupSnapshot.serializer(), createSnapshot())
@@ -104,6 +104,6 @@ class BackupRepository(
     }
 
     private fun restorePhoto(backup: ProfileBackup): String? = backup.avatarPhotoBase64
-        ?.let { encoded -> runCatching { Base64.getDecoder().decode(encoded) }.getOrNull() }
+        ?.let { encoded -> runCatching { Base64.decode(encoded, Base64.DEFAULT) }.getOrNull() }
         ?.let { bytes -> avatarPhotoStore?.saveBytes(bytes) }
 }

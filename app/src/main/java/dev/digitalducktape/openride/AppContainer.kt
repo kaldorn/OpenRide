@@ -16,6 +16,7 @@ import java.time.ZoneId
 import androidx.room.Room
 import dev.digitalducktape.openride.core.backup.AutoBackupManager
 import dev.digitalducktape.openride.core.backup.BackupRepository
+import dev.digitalducktape.openride.core.backup.LegacyFileAutoBackupStore
 import dev.digitalducktape.openride.core.backup.MediaStoreAutoBackupStore
 import dev.digitalducktape.openride.core.camera.CameraXFaceSource
 import dev.digitalducktape.openride.core.camera.DefaultHeadTracker
@@ -137,7 +138,12 @@ class AppContainer(private val applicationContext: Context) {
     val autoBackupManager: AutoBackupManager by lazy {
         AutoBackupManager(
             backupRepository = backupRepository,
-            store = MediaStoreAutoBackupStore(applicationContext),
+            // MediaStore.Downloads needs Android 10; the original Bike's tablet is on Android 7.
+            store = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                MediaStoreAutoBackupStore(applicationContext)
+            } else {
+                LegacyFileAutoBackupStore(applicationContext)
+            },
             scope = containerScope,
             dataChanges = combine(
                 database.profileDao().observeAll(),

@@ -47,6 +47,12 @@
          while a camera game is on screen. The runtime request (with an explainer) belongs to the
          games hub. Not required: the app installs and runs without a camera. -->
     <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Android 7-9 only: lets LegacyFileAutoBackupStore keep the automatic backup in
+         Download/OpenRide/ (Android 10+ uses MediaStore and needs no permission). -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
 
     <!-- Profile avatar photos are taken by handing ACTION_IMAGE_CAPTURE to whatever camera app

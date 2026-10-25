@@ -16,10 +16,10 @@ android {
 
     defaultConfig {
         applicationId = "dev.digitalducktape.openride"
-        // Android 10 (API 29). The reference tablet runs Android 11, but some Gen 2 bikes are
-        // still on an Android 10 firmware and cannot be updated. Nothing in the app calls an
-        // API above 29 — see the audit note in docs/DEVICE.md.
-        minSdk = 29
+        // Android 7.0 (API 24): the original Bike's PLTN-RB1VO tablet is frozen on Android 7.
+        // java.time is backported by core library desugaring (below); the Android 10-only
+        // MediaStore backup has a file-based fallback (LegacyFileAutoBackupStore).
+        minSdk = 24
         targetSdk = 34
         versionCode = 7
         versionName = "1.0.0"
@@ -36,6 +36,17 @@ android {
         // dev build never offers to install the real bike APK over itself. Only the `real`
         // asset is published, so the mock build simply finds nothing and stays quiet.
         buildConfigField("String", "UPDATE_APK_ASSET_INFIX", "\"mock\"")
+    }
+
+    // Android 7 fork: a committed debug keystore, so every CI build is signed with the same key
+    // and installs over the previous one (adb install -r) without wiping ride data.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("fork-debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
 
     buildTypes {
@@ -66,7 +77,8 @@ android {
             versionNameSuffix = "-real"
             buildConfigField("boolean", "USE_REAL_BIKE_SENSOR", "true")
             // This is the build published to the bike, so it updates from the `real` asset.
-            buildConfigField("String", "UPDATE_APK_ASSET_INFIX", "\"real\"")
+            // Android 7 fork: upstream's `real` APKs need Android 10, so never offer them here.
+            buildConfigField("String", "UPDATE_APK_ASSET_INFIX", "\"api24\"")
             matchingFallbacks += "debug"
             // Bike-only build: arm64 alone (initWith copied debug's emulator ABI too).
             ndk {
@@ -87,6 +99,7 @@ android {
     }
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -242,6 +255,7 @@ androidComponents {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
