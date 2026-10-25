@@ -52,6 +52,32 @@ jobs:
         continue-on-error: true
         run: ./gradlew :app:testDebugUnitTest
 
+      - name: Report lint and test problems as annotations
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          for f in glob.glob("app/build/reports/lint-results-debugReal.xml"):
+              issues = ET.parse(f).getroot().findall("issue")
+              newapi = [i for i in issues if i.get("id") in ("NewApi", "InlinedApi", "ObsoleteSdkInt")]
+              errors = [i for i in issues if i.get("severity") in ("Error", "Fatal")]
+              print(f"::notice::lint: {len(issues)} issues, {len(errors)} errors, {len(newapi)} API-level")
+              for i in (newapi + [e for e in errors if e not in newapi])[:15]:
+                  loc = i.find("location")
+                  where = f"{loc.get('file','?').split('/app/')[-1]}:{loc.get('line','?')}" if loc is not None else "?"
+                  print(f"::warning::lint {i.get('id')} {where} {i.get('message')[:200]}")
+          failed = 0
+          for f in glob.glob("app/build/test-results/**/*.xml", recursive=True):
+              for tc in ET.parse(f).getroot().iter("testcase"):
+                  bad = tc.find("failure") if tc.find("failure") is not None else tc.find("error")
+                  if bad is not None:
+                      failed += 1
+                      if failed <= 15:
+                          msg = (bad.get("message") or bad.text or "")[:200].replace("\n", " ")
+                          print(f"::warning::test {tc.get('classname')}.{tc.get('name')}: {msg}")
+          print(f"::notice::unit tests: {failed} failed")
+          PY
+
       - name: Build APK
         run: ./gradlew :app:assembleDebugReal
 
