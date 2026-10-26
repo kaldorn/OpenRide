@@ -15,3 +15,14 @@ interface AutoBackupStore {
     /** The latest automatic backup's content, or `null` if none is readable. */
     fun readLatest(): String?
 }
+
+/**
+ * The backup's folder and file name, shared by both stores. Kept outside the API 29
+ * [MediaStoreAutoBackupStore] so the Android 7 fork's [LegacyFileAutoBackupStore] can use them.
+ */
+object AutoBackupFiles {
+    const val RELATIVE_PATH = "Download/OpenRide/"
+
+    /** Backup file name for [packageName] — namespaced so the mock and real builds don't collide. */
+    fun fileNameFor(packageName: String) = "openride-autobackup-$packageName.json"
+}

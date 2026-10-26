@@ -19,7 +19,7 @@ import java.io.File
  */
 class LegacyFileAutoBackupStore(context: Context) : AutoBackupStore {
     private val appContext = context.applicationContext
-    private val fileName = MediaStoreAutoBackupStore.fileNameFor(appContext.packageName)
+    private val fileName = AutoBackupFiles.fileNameFor(appContext.packageName)
 
     override fun write(json: String): Boolean = runCatching {
         val dir = backupDir() ?: return false

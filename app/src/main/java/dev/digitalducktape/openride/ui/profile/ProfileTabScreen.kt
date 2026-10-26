@@ -27,7 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.digitalducktape.openride.core.backup.MediaStoreAutoBackupStore
+import dev.digitalducktape.openride.core.backup.AutoBackupFiles
 import dev.digitalducktape.openride.core.route.RouteHolder
 import dev.digitalducktape.openride.ui.common.ExportShare
 import dev.digitalducktape.openride.core.data.Profile
@@ -190,7 +190,7 @@ fun ProfileTabScreen(
             }
             Text(
                 // The folder only: the full file name wrapped over four lines in the column.
-                text = "Also saved after every ride to " + MediaStoreAutoBackupStore.RELATIVE_PATH.trimEnd('/'),
+                text = "Also saved after every ride to " + AutoBackupFiles.RELATIVE_PATH.trimEnd('/'),
                 style = OrType.Caption,
                 color = OrColors.OnSurfaceMuted,
                 modifier = Modifier.padding(horizontal = OrSpacing.md),

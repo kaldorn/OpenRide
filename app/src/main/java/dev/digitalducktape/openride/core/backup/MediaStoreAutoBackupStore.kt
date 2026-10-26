@@ -35,7 +35,7 @@ import androidx.annotation.RequiresApi
 @RequiresApi(Build.VERSION_CODES.Q)
 class MediaStoreAutoBackupStore(context: Context) : AutoBackupStore {
     private val resolver = context.applicationContext.contentResolver
-    private val fileName = fileNameFor(context.applicationContext.packageName)
+    private val fileName = AutoBackupFiles.fileNameFor(context.applicationContext.packageName)
 
     override fun write(json: String): Boolean = runCatching {
         val uri = findExisting() ?: insertNew() ?: return false
@@ -73,15 +73,15 @@ class MediaStoreAutoBackupStore(context: Context) : AutoBackupStore {
         ContentValues().apply {
             put(MediaStore.Downloads.DISPLAY_NAME, fileName)
             put(MediaStore.Downloads.MIME_TYPE, "application/json")
-            put(MediaStore.Downloads.RELATIVE_PATH, RELATIVE_PATH)
+            put(MediaStore.Downloads.RELATIVE_PATH, AutoBackupFiles.RELATIVE_PATH)
             put(MediaStore.Downloads.IS_PENDING, 1)
         },
     )
 
     companion object {
-        const val RELATIVE_PATH = "Download/OpenRide/"
+        const val RELATIVE_PATH = AutoBackupFiles.RELATIVE_PATH
 
         /** Backup file name for [packageName] — see the class doc for why it's namespaced. */
-        fun fileNameFor(packageName: String) = "openride-autobackup-$packageName.json"
+        fun fileNameFor(packageName: String) = AutoBackupFiles.fileNameFor(packageName)
     }
 }
